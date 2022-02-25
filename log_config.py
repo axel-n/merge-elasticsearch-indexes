@@ -9,6 +9,8 @@ console_formatter = logging.Formatter(
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 
+# TODO use filename from config
+
 root_logger = logging.getLogger()
 root_logger.setLevel(config.app["LOG_LEVEL"])
 
