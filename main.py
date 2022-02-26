@@ -8,7 +8,8 @@ from log_config import get_logger
 
 log = get_logger()
 
-MAX_INDEX_SIZE_IN_BYTES = 1024 * 1024 * 1024 * config.elasticsearch["MAX_INDEX_SIZE_IN_GIGABYTES"]
+ONE_GIGABYTE_IN_BYTES = 1024 * 1024 * 1024
+MAX_INDEX_SIZE_IN_BYTES = ONE_GIGABYTE_IN_BYTES * config.elasticsearch["MAX_INDEX_SIZE_IN_GIGABYTES"]
 
 
 def get_indexes_for_merge(indexes_by_current_index_name: List) -> tuple[list[Any], float, int]:
@@ -33,9 +34,8 @@ def get_indexes_for_merge(indexes_by_current_index_name: List) -> tuple[list[Any
         else:
             log.debug(f"skipping index={index_name} because days to large")
 
-    size_in_gigabytes_indexes_for_merge = float(
-        "{:.4f}".format(current_size_in_bytes_indexes_for_merge / 1024 / 1024 / 1024)
-    )
+    size_in_gigabytes_indexes_for_merge = \
+        float("{:.4f}".format(current_size_in_bytes_indexes_for_merge / ONE_GIGABYTE_IN_BYTES))
 
     return indexes_for_merge, size_in_gigabytes_indexes_for_merge, current_count_days_for_merge
 
