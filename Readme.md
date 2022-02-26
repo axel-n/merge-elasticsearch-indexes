@@ -39,6 +39,10 @@ yellow open customer5.logs-2022.02.20            KNOhhtFLTuiJBphJbifThg 1 1   1 
 yellow open customer5.logs-2022.02.21            OHpojuLrQAaNmFmeQTf7Gg 1 1   1 0 128.2kb 128.2kb
 ```
 
-## How to run 
+## How to run
 change params (if you want) in `config.py`
 run with IDE or from console: `python main.py` 
+
+## How to local tests
+generate data from another [project](https://github.com/axel-n/demo-data-for-elasticsearch)
+run main.py from step `How to run`
