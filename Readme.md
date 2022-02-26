@@ -24,6 +24,8 @@ yellow open customer5.logs-2022.02.21 OHpojuLrQAaNmFmeQTf7Gg 1 1   1 0 128.1kb 1
 ```
 
 app can merge these indexes like this:
+- "big" (more than params) indexes from customer5 not merged
+- "medium"/"small" indexes by customer4, customer1 merged to separated blocks
 ```bash
 curl -XGET "http://localhost:9200/_cat/indices"
 
@@ -35,5 +37,3 @@ yellow open customer1.logs-2022.02.21            Agbk6AXBTk-t_OqrzInxbQ 1 1   1 
 yellow open customer5.logs-2022.02.20            KNOhhtFLTuiJBphJbifThg 1 1   1 0 128.2kb 128.2kb
 yellow open customer5.logs-2022.02.21            OHpojuLrQAaNmFmeQTf7Gg 1 1   1 0 128.2kb 128.2kb
 ```
-
-## 
