@@ -70,23 +70,24 @@ def run():
 
     current_date = oldest_date
 
-    # while current_date <= yesterday:
-    indexes_by_date = get_indexes_by_date(current_date)
+    while current_date <= yesterday:
+        indexes_by_date = get_indexes_by_date(current_date)
 
-    for index in indexes_by_date:
-        index_with_date = index["index"]
-        log.info(f"start working with index={index_with_date}, all indexes.count={len(indexes_by_date)}" +
-                 f"by date={index_with_date[-10:]}")
-        indexes_by_current_index_name = get_indexes_by_name(index_with_date)
+        for index in indexes_by_date:
+            index_with_date = index["index"]
+            log.info(f"start working with index={index_with_date}, all indexes.count={len(indexes_by_date)} " +
+                     f"by date={index_with_date[-10:]}")
+            indexes_by_current_index_name = get_indexes_by_name(index_with_date, current_date)
 
-        indexes_for_merge = get_indexes_for_merge(indexes_by_current_index_name)
-        log.info(f"preparing indexes size={indexes_for_merge[1]}gb, count={indexes_for_merge[2]} for merge")
+            indexes_for_merge = get_indexes_for_merge(indexes_by_current_index_name)
 
-        merge_indexes(indexes_for_merge[0])
-        log.info(f"merged indexes with size={indexes_for_merge[1]}gb, count={indexes_for_merge[2]}")
+            if indexes_for_merge[2] > 1:
+                log.info(f"preparing indexes size={indexes_for_merge[1]}gb, count={indexes_for_merge[2]} for merge")
+                merge_indexes(indexes_for_merge[0])
+                log.info(f"merged indexes with size={indexes_for_merge[1]}gb, count={indexes_for_merge[2]}")
 
-        # current_date = current_date + timedelta(1)
-        # log.debug(f"increment current_date={current_date}")
+        current_date = current_date + timedelta(1)
+        log.debug(f"increment current_date={current_date}")
 
 
 if __name__ == '__main__':

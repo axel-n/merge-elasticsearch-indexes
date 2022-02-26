@@ -11,6 +11,7 @@ from log_config import get_logger
 
 log = get_logger()
 
+
 def get_oldest_date_in_indexes() -> datetime:
     connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
     connection.request("GET", "/_cat/indices?format=json&pretty")
@@ -20,12 +21,12 @@ def get_oldest_date_in_indexes() -> datetime:
     oldest_date = datetime.now() - timedelta(1)  # yesterday
 
     for index in data:
-        index_name = index["index"]
+        index_name_with_date = index["index"]
         # skipping already merged indexes
-        match = re.search("logs-[0-9]{4}[.][0-9]{2}[.][0-9]{2}$", index_name)
+        match = re.search("logs-[0-9]{4}[.][0-9]{2}[.][0-9]{2}$", index_name_with_date)
 
         if match is not None:
-            row_date = index_name[-10:]
+            row_date = index_name_with_date[-10:]
             current_date = datetime.strptime(row_date, '%Y.%m.%d')
 
             if current_date < oldest_date:
@@ -44,14 +45,24 @@ def get_indexes_by_date(current_date: datetime) -> List:
     return json.loads(response)
 
 
-def get_indexes_by_name(index_name_with_date: str) -> List:
+def get_indexes_by_name(index_name_with_date: str, date_from: datetime) -> List:
     index_name_without_date = index_name_with_date[:-10]
     connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
     connection.request("GET", f"_cat/indices/{index_name_without_date}*?s=index&bytes=b&format=json&pretty")
 
     response = str(connection.getresponse().read().decode())
 
-    return json.loads(response)
+    parsed_response = json.loads(response)
+
+    filtered_response = []
+    for index in parsed_response:
+        date_index = index["index"][-10:]
+        parsed_date_index = datetime.strptime(date_index, '%Y.%m.%d')
+
+        if date_from >= parsed_date_index:
+            filtered_response.append(index)
+
+    return filtered_response
 
 
 def merge_single_index(index_source: str, index_target: str) -> str:
