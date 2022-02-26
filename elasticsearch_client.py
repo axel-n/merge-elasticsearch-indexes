@@ -12,6 +12,15 @@ from log_config import get_logger
 log = get_logger()
 
 
+def is_valid_index_name(index_name_with_date: str) -> bool:
+    # skipping already merged indexes
+    match = re.search("logs-[0-9]{4}[.][0-9]{2}[.][0-9]{2}$", index_name_with_date)
+
+    if match is not None:
+        return True
+
+    return False
+
 def get_oldest_date_in_indexes() -> datetime:
     connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
     connection.request("GET", "/_cat/indices?format=json&pretty")
@@ -22,10 +31,8 @@ def get_oldest_date_in_indexes() -> datetime:
 
     for index in data:
         index_name_with_date = index["index"]
-        # skipping already merged indexes
-        match = re.search("logs-[0-9]{4}[.][0-9]{2}[.][0-9]{2}$", index_name_with_date)
 
-        if match is not None:
+        if is_valid_index_name(index_name_with_date):
             row_date = index_name_with_date[-10:]
             current_date = datetime.strptime(row_date, '%Y.%m.%d')
 
@@ -56,11 +63,13 @@ def get_indexes_by_name(index_name_with_date: str, date_from: datetime) -> List:
 
     filtered_response = []
     for index in parsed_response:
-        date_index = index["index"][-10:]
-        parsed_date_index = datetime.strptime(date_index, '%Y.%m.%d')
+        index_name = index["index"]
+        if is_valid_index_name(index_name):
+            date_index = index_name[-10:]
+            parsed_date_index = datetime.strptime(date_index, '%Y.%m.%d')
 
-        if date_from >= parsed_date_index:
-            filtered_response.append(index)
+            if date_from >= parsed_date_index:
+                filtered_response.append(index)
 
     return filtered_response
 

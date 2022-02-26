@@ -21,7 +21,7 @@ def get_indexes_for_merge(indexes_by_current_index_name: List) -> tuple[list[Any
         index_size = int(index["pri.store.size"])
         index_name = index["index"]
 
-        if current_count_days_for_merge < config.elasticsearch["MAX_INDEX_DAY_MERGE"]:
+        if current_count_days_for_merge <= config.elasticsearch["MAX_INDEX_DAY_MERGE"]:
             if current_size_in_bytes_indexes_for_merge + index_size <= MAX_INDEX_SIZE_IN_BYTES:
 
                 log.debug(f"index={index_name} preparing for merging")
@@ -55,6 +55,7 @@ def merge_indexes(indexes_for_merge: List):
     for i, index_with_date in enumerate(indexes_for_merge):
         task_id = merge_single_index(index_with_date, index_temp_for_merge)
         await_task(task_id)
+
     log.debug(f"merged indexes count={len(indexes_for_merge)} to tmp index={index_temp_for_merge}")
     delete_indexes(indexes_for_merge)
 
