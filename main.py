@@ -1,6 +1,5 @@
-import json
 from datetime import datetime, timedelta
-from typing import List, Tuple, Any
+from typing import List, Any
 
 import config
 from elasticsearch_client import get_oldest_date_in_indexes, get_indexes_by_date, get_indexes_by_name, \
