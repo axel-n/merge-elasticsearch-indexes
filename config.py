@@ -1,3 +1,5 @@
+import logging
+
 elasticsearch = dict(
     HOST="localhost",
     PORT="9200",
@@ -5,6 +7,6 @@ elasticsearch = dict(
     MAX_INDEX_DAY_MERGE=3
 )
 app = dict(
-    LOG_LEVEL="DEBUG",
+    LOG_LEVEL=logging.DEBUG,
     DELAY_IN_SECONDS_BETWEEN_CHECK_MERGE_TASK_IN_ELASTICSEARCH=1
 )

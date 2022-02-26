@@ -10,10 +10,9 @@ from config import elasticsearch
 from log_config import get_logger
 
 log = get_logger()
-connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
-
 
 def get_oldest_date_in_indexes() -> datetime:
+    connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
     connection.request("GET", "/_cat/indices?format=json&pretty")
     response = connection.getresponse().read()
 
@@ -38,6 +37,7 @@ def get_oldest_date_in_indexes() -> datetime:
 def get_indexes_by_date(current_date: datetime) -> List:
     formatted_date = current_date.strftime("%Y.%m.%d")
 
+    connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
     connection.request("GET", f"_cat/indices/*{formatted_date}?bytes=b&format=json&pretty")
     response = str(connection.getresponse().read().decode())
 
@@ -45,7 +45,8 @@ def get_indexes_by_date(current_date: datetime) -> List:
 
 
 def get_indexes_by_name(index_name_with_date: str) -> List:
-    index_name_without_date = index_name_with_date[-10:]
+    index_name_without_date = index_name_with_date[:-10]
+    connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
     connection.request("GET", f"_cat/indices/{index_name_without_date}*?s=index&bytes=b&format=json&pretty")
 
     response = str(connection.getresponse().read().decode())
@@ -63,7 +64,8 @@ def merge_single_index(index_source: str, index_target: str) -> str:
         }
     }
 
-    connection.request("POST", "_reindex?wait_for_completion = false", json.dumps(body))
+    connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
+    connection.request("POST", "_reindex?wait_for_completion=false", body=json.dumps(body), headers={"Content-Type": "application/json"})
     response = str(connection.getresponse().read().decode())
 
     return json.loads(response)["task"]
@@ -72,7 +74,8 @@ def merge_single_index(index_source: str, index_target: str) -> str:
 def await_task(task_id: str):
     is_completed = False
     while not is_completed:
-        connection.request("GET", f" _tasks/{task_id}")
+        connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
+        connection.request("GET", f"/_tasks/{task_id}")
         response = str(connection.getresponse().read().decode())
 
         is_completed = json.loads(response)["completed"]
@@ -84,4 +87,10 @@ def await_task(task_id: str):
 
 def delete_indexes(indexes: List):
     for index_name in indexes:
-        connection.request("DELETE", f"/{index_name}")
+        delete_index(index_name)
+
+
+def delete_index(index_name: str):
+    log.info(f"delete index={index_name}")
+    connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
+    connection.request("DELETE", f"/{index_name}")
