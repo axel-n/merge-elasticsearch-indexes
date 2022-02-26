@@ -1,7 +1,7 @@
-import http
 import json
 import re
 from datetime import datetime, timedelta
+from http.client import HTTPConnection
 from time import sleep
 from typing import List
 
@@ -9,12 +9,14 @@ import config
 from config import elasticsearch
 from log_config import get_logger
 
-client = http.client.HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
 log = get_logger()
+connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
 
 
 def get_oldest_date_in_indexes() -> datetime:
-    response = client.request("GET", "/_cat/indices?format=json&pretty")
+    connection.request("GET", "/_cat/indices?format=json&pretty")
+
+    response = str(connection.getresponse().read())
 
     data = json.loads(response)
     oldest_date = datetime.now() - timedelta(1)  # yesterday
@@ -36,14 +38,18 @@ def get_oldest_date_in_indexes() -> datetime:
 
 def get_indexes_by_date(current_date: datetime) -> List:
     formatted_date = current_date.strftime("%Y.%m.%d")
-    response = client.request("GET", f"_cat/indices/*{formatted_date}?bytes=b&format=json&pretty")
+
+    connection.request("GET", f"_cat/indices/*{formatted_date}?bytes=b&format=json&pretty")
+    response = str(connection.getresponse().read())
 
     return json.loads(response)
 
 
 def get_indexes_by_name(index_name_with_date: str) -> List:
     index_name_without_date = index_name_with_date[0:len(index_name_with_date) - 10]
-    response = client.request("GET", f"_cat/indices/{index_name_without_date}*?s=index&bytes=b&format=json&pretty")
+    connection.request("GET", f"_cat/indices/{index_name_without_date}*?s=index&bytes=b&format=json&pretty")
+
+    response = str(connection.getresponse().read())
 
     return json.loads(response)
 
@@ -58,7 +64,8 @@ def merge_single_index(index_source: str, index_target: str) -> str:
         }
     }
 
-    response = client.request("POST", "_reindex?wait_for_completion = false", json.dumps(body))
+    connection.request("POST", "_reindex?wait_for_completion = false", json.dumps(body))
+    response = str(connection.getresponse().read())
 
     return json.loads(response)["task"]
 
@@ -66,7 +73,8 @@ def merge_single_index(index_source: str, index_target: str) -> str:
 def await_task(task_id: str):
     is_completed = False
     while not is_completed:
-        response = client.request("GET", f" _tasks/{task_id}")
+        connection.request("GET", f" _tasks/{task_id}")
+        response = str(connection.getresponse().read())
 
         is_completed = json.loads(response)["completed"]
 
@@ -77,4 +85,4 @@ def await_task(task_id: str):
 
 def delete_indexes(indexes: List):
     for index_name in indexes:
-        client.request("DELETE", f"/{index_name}")
+        connection.request("DELETE", f"/{index_name}")
