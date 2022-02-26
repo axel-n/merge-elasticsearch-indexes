@@ -1,7 +1,10 @@
 elasticsearch = dict(
     HOST="localhost",
-    PORT="9200"
+    PORT="9200",
+    MAX_INDEX_SIZE_IN_GIGABYTES=15,
+    MAX_INDEX_DAY_MERGE=7
 )
 app = dict(
-    LOG_LEVEL="DEBUG"
+    LOG_LEVEL="DEBUG",
+    DELAY_IN_SECONDS_BETWEEN_CHECK_MERGE_TASK_IN_ELASTICSEARCH=5
 )
