@@ -91,6 +91,6 @@ def delete_indexes(indexes: List):
 
 
 def delete_index(index_name: str):
-    log.info(f"delete index={index_name}")
+    log.debug(f"delete index={index_name}")
     connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
     connection.request("DELETE", f"/{index_name}")

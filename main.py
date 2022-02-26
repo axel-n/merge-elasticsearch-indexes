@@ -24,14 +24,14 @@ def get_indexes_for_merge(indexes_by_current_index_name: List) -> tuple[list[Any
         if current_count_days_for_merge < config.elasticsearch["MAX_INDEX_DAY_MERGE"]:
             if current_size_in_bytes_indexes_for_merge + index_size <= MAX_INDEX_SIZE_IN_BYTES:
 
-                log.info(f"index={index_name} preparing for merging")
+                log.debug(f"index={index_name} preparing for merging")
                 indexes_for_merge.append(index_name)
                 current_size_in_bytes_indexes_for_merge += index_size
                 current_count_days_for_merge += 1
             else:
-                log.info(f"skipping index={index_name} because size to large")
+                log.debug(f"skipping index={index_name} because size to large")
         else:
-            log.info(f"skipping index={index_name} because days to large")
+            log.debug(f"skipping index={index_name} because days to large")
 
     size_in_gigabytes_indexes_for_merge = float(
         "{:.4f}".format(current_size_in_bytes_indexes_for_merge / 1024 / 1024 / 1024)
@@ -75,8 +75,8 @@ def run():
 
     for index in indexes_by_date:
         index_with_date = index["index"]
-        log.info(
-            f"start working with index={index_with_date}, all indexes.count={len(indexes_by_date)} by date={index_with_date[-10:]}")
+        log.info(f"start working with index={index_with_date}, all indexes.count={len(indexes_by_date)}" +
+                 f"by date={index_with_date[-10:]}")
         indexes_by_current_index_name = get_indexes_by_name(index_with_date)
 
         indexes_for_merge = get_indexes_for_merge(indexes_by_current_index_name)
