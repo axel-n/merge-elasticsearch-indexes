@@ -63,7 +63,7 @@ def merge_indexes(indexes_for_merge: List):
 
 def run():
     oldest_date = get_oldest_date_in_indexes()
-    log.info(f"staring from oldest_date={oldest_date}")
+    log.info(f"staring from oldest_date={str(oldest_date)[0:10]}")
 
     yesterday = datetime.now() - timedelta(1)
 
@@ -72,8 +72,9 @@ def run():
     while current_date <= yesterday:
         indexes_by_date = get_indexes_by_date(current_date)
 
-        for index_with_date in indexes_by_date:
-            log.info(f"start working with index={index_with_date}, all indexes.count={len(indexes_by_date)} by date={index_with_date}")
+        for index in indexes_by_date:
+            index_with_date = index["index"]
+            log.info(f"start working with index={index_with_date}, all indexes.count={len(indexes_by_date)} by date={index_with_date[-10:]}")
             indexes_by_current_index_name = get_indexes_by_name(index_with_date)
 
             indexes_for_merge = get_indexes_for_merge(indexes_by_current_index_name)
