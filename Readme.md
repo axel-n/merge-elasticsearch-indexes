@@ -10,7 +10,7 @@ for example - limit by 3 days and 100kb
 
 you have indexes like this:
 ```bash
-curl -XGET "http://localhost:9200/_cat/indices"
+curl -XGET "http://localhost:9200/_cat/indices?s=index"
 
 yellow open customer4.logs-2022.02.21 XAlL3XfYT8iGeuoNnIcjzQ 1 1   1 0  37.5kb  37.5kb
 yellow open customer1.logs-2022.02.19 LgsvYGvSSS6T8PRkH5G2Iw 1 1   1 0  18.1kb  18.1kb
@@ -25,7 +25,7 @@ yellow open customer5.logs-2022.02.21 OHpojuLrQAaNmFmeQTf7Gg 1 1   1 0 128.1kb 1
 
 app can merge these indexes like this:
 ```bash
-curl -XGET "http://localhost:9200/_cat/indices"
+curl -XGET "http://localhost:9200/_cat/indices?s=index"
 
 yellow open customer4.logs-2022.02.21            XAlL3XfYT8iGeuoNnIcjzQ 1 1   1 0  37.7kb  37.7kb
 yellow open customer1.logs-2022.02.19-2022.02.20 9WksIhNYTe2eLGG9YyQkZQ 1 1   2 0  19.5kb  19.5kb
