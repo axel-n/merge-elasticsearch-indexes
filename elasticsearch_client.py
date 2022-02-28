@@ -43,7 +43,7 @@ def get_oldest_date_in_indexes() -> datetime:
     return oldest_date
 
 
-def get_indexes_by_date(current_date: datetime) -> List:
+def get_indexes_by_date(current_date: datetime) -> list[dict]:
     formatted_date = current_date.strftime("%Y.%m.%d")
 
     connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
@@ -53,8 +53,8 @@ def get_indexes_by_date(current_date: datetime) -> List:
     return json.loads(response)
 
 
-def get_indexes_by_name(index_name_with_date: str, date_from: datetime, date_end: datetime) -> List:
-    log.debug(f"index_name_with_date={index_name_with_date}, date_from={date_from}")
+def get_indexes_by_name(index_name_with_date: str, date_start: datetime, date_end: datetime) -> list[dict]:
+    log.debug(f"index_name_with_date={index_name_with_date}, date_start={date_start}")
     index_name_without_date = index_name_with_date[:-10]
     connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
     connection.request("GET", f"_cat/indices/{index_name_without_date}*?s=index&bytes=b&format=json&pretty")
@@ -70,17 +70,20 @@ def get_indexes_by_name(index_name_with_date: str, date_from: datetime, date_end
             date_index = index_name[-10:]
             parsed_date_index = datetime.strptime(date_index, '%Y.%m.%d').replace(tzinfo=timezone.utc)
 
-            if date_from <= parsed_date_index:
+            if date_start <= parsed_date_index:
                 if date_end >= parsed_date_index:
                     filtered_response.append(index)
                 else:
-                    log.debug(f"filtered index_name={index_name} because parsed_date_index={parsed_date_index} newer than need data={date_end}")
+                    log.debug(
+                        f"filtered index_name={index_name} because parsed_date_index={parsed_date_index} newer than need data={date_end}")
             else:
-                log.debug(f"filtered index_name={index_name} because parsed_date_index={parsed_date_index} older than need data={date_from}")
+                log.debug(
+                    f"filtered index_name={index_name} because parsed_date_index={parsed_date_index} older than need data={date_start}")
         else:
             log.debug(f"filtered index_name={index_name} because index already merged")
 
-    log.debug(f"found indexes.size={len(filtered_response)} for index_name_with_date={index_name_with_date}, from={date_from}")
+    log.debug(
+        f"found indexes.size={len(filtered_response)} for index_name_with_date={index_name_with_date}, start={date_start}, end={date_end}")
 
     return filtered_response
 
@@ -96,7 +99,8 @@ def merge_single_index(index_source: str, index_target: str) -> str:
     }
 
     connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
-    connection.request("POST", "_reindex?wait_for_completion=false", body=json.dumps(body), headers={"Content-Type": "application/json"})
+    connection.request("POST", "_reindex?wait_for_completion=false", body=json.dumps(body),
+                       headers={"Content-Type": "application/json"})
     response = str(connection.getresponse().read().decode())
 
     return json.loads(response)["task"]
@@ -116,7 +120,7 @@ def await_task(task_id: str):
         sleep(config.app["DELAY_IN_SECONDS_BETWEEN_CHECK_MERGE_TASK_IN_ELASTICSEARCH"])
 
 
-def delete_indexes(indexes: List):
+def delete_indexes(indexes: list[str]):
     for index_name in indexes:
         delete_index(index_name)
 
@@ -125,3 +129,17 @@ def delete_index(index_name: str):
     log.debug(f"delete index={index_name}")
     connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
     connection.request("DELETE", f"/{index_name}")
+
+
+def get_tmp_indexes() -> list[str]:
+    connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
+    connection.request("GET", f"_cat/indices/*_tmp?bytes=b&format=json&pretty")
+    response = str(connection.getresponse().read().decode())
+
+    parsed_response = json.loads(response)
+
+    tmp_indexes = []
+    for index in parsed_response:
+        tmp_indexes.append(index["index"])
+
+    return tmp_indexes

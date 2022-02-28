@@ -3,7 +3,7 @@ from typing import List, Any, Tuple
 
 import config
 from elasticsearch_client import get_oldest_date_in_indexes, get_indexes_by_date, get_indexes_by_name, \
-    merge_single_index, await_task, delete_indexes, delete_index
+    merge_single_index, await_task, delete_indexes, delete_index, get_tmp_indexes
 from log_config import get_logger
 
 log = get_logger()
@@ -12,7 +12,7 @@ ONE_GIGABYTE_IN_BYTES = 1024 * 1024 * 1024
 MAX_INDEX_SIZE_IN_BYTES = ONE_GIGABYTE_IN_BYTES * config.elasticsearch["MAX_INDEX_SIZE_IN_GIGABYTES"]
 
 
-def get_indexes_for_merge(indexes_by_current_index_name: List) -> tuple[list[str], float, int, bool]:
+def get_indexes_for_merge(indexes_by_current_index_name: list[dict]) -> tuple[list[str], float, int, bool]:
     indexes_for_merge = list()
 
     current_size_in_bytes_indexes_for_merge = 0
@@ -70,6 +70,12 @@ def merge_indexes(indexes_for_merge: List):
 
 
 def run():
+    old_tmp_indexes = get_tmp_indexes()
+
+    if len(old_tmp_indexes) >= 1:
+        log.info(f"found previous not finished merged indexes={old_tmp_indexes}. delete it")
+        delete_indexes(old_tmp_indexes)
+
     oldest_date = get_oldest_date_in_indexes()
     log.info(f"staring from oldest_date={str(oldest_date)}")
 
