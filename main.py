@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Any, Tuple
 
 import config
@@ -23,8 +23,6 @@ def get_indexes_for_merge(indexes_by_current_index_name: List) -> tuple[list[str
     for index in indexes_by_current_index_name:
         index_size = int(index["pri.store.size"])
         index_name = index["index"]
-
-        log.debug(f"index_name={index_name}, index_size={index_size} current_size_in_bytes_indexes_for_merge={current_size_in_bytes_indexes_for_merge}, MAX_INDEX_SIZE_IN_BYTES={MAX_INDEX_SIZE_IN_BYTES}")
 
         if current_count_days_for_merge <= config.elasticsearch["MAX_INDEX_DAY_MERGE"]:
             new_index_size = current_size_in_bytes_indexes_for_merge + index_size
@@ -73,9 +71,10 @@ def merge_indexes(indexes_for_merge: List):
 
 def run():
     oldest_date = get_oldest_date_in_indexes()
-    log.info(f"staring from oldest_date={str(oldest_date)[0:10]}")
+    log.info(f"staring from oldest_date={str(oldest_date)}")
 
-    yesterday = datetime.now() - timedelta(1)
+    today = datetime.now(tz=timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    yesterday = (today - timedelta(days=1)).replace(tzinfo=timezone.utc, hour=0, minute=0, second=0, microsecond=0)
 
     current_date = oldest_date
 
@@ -86,7 +85,7 @@ def run():
             index_with_date = index["index"]
             log.info(f"start working with index={index_with_date}, all indexes.count={len(indexes_by_date)} " +
                      f"by date={index_with_date[-10:]}")
-            indexes_by_current_index_name = get_indexes_by_name(index_with_date, current_date)
+            indexes_by_current_index_name = get_indexes_by_name(index_with_date, current_date, yesterday)
 
             if len(indexes_by_current_index_name) <= 1:
                 log.debug(f"not found enough indexes for merge. "

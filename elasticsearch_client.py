@@ -1,6 +1,6 @@
 import json
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from http.client import HTTPConnection
 from time import sleep
 from typing import List
@@ -21,20 +21,21 @@ def is_valid_index_name(index_name_with_date: str) -> bool:
 
     return False
 
+
 def get_oldest_date_in_indexes() -> datetime:
     connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
     connection.request("GET", "/_cat/indices?format=json&pretty")
     response = connection.getresponse().read()
 
     data = json.loads(response)
-    oldest_date = datetime.now() - timedelta(1)  # yesterday
+    oldest_date = datetime.now(tz=timezone.utc) - timedelta(1)  # yesterday
 
     for index in data:
         index_name_with_date = index["index"]
 
         if is_valid_index_name(index_name_with_date):
             row_date = index_name_with_date[-10:]
-            current_date = datetime.strptime(row_date, '%Y.%m.%d')
+            current_date = datetime.strptime(row_date, '%Y.%m.%d').replace(tzinfo=timezone.utc)
 
             if current_date < oldest_date:
                 oldest_date = current_date
@@ -52,7 +53,7 @@ def get_indexes_by_date(current_date: datetime) -> List:
     return json.loads(response)
 
 
-def get_indexes_by_name(index_name_with_date: str, date_from: datetime) -> List:
+def get_indexes_by_name(index_name_with_date: str, date_from: datetime, date_end: datetime) -> List:
     log.debug(f"index_name_with_date={index_name_with_date}, date_from={date_from}")
     index_name_without_date = index_name_with_date[:-10]
     connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
@@ -67,10 +68,13 @@ def get_indexes_by_name(index_name_with_date: str, date_from: datetime) -> List:
         index_name = index["index"]
         if is_valid_index_name(index_name):
             date_index = index_name[-10:]
-            parsed_date_index = datetime.strptime(date_index, '%Y.%m.%d')
+            parsed_date_index = datetime.strptime(date_index, '%Y.%m.%d').replace(tzinfo=timezone.utc)
 
             if date_from <= parsed_date_index:
-                filtered_response.append(index)
+                if date_end >= parsed_date_index:
+                    filtered_response.append(index)
+                else:
+                    log.debug(f"filtered index_name={index_name} because parsed_date_index={parsed_date_index} newer than need data={date_end}")
             else:
                 log.debug(f"filtered index_name={index_name} because parsed_date_index={parsed_date_index} older than need data={date_from}")
         else:
