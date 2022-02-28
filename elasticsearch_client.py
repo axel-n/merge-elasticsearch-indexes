@@ -53,6 +53,7 @@ def get_indexes_by_date(current_date: datetime) -> List:
 
 
 def get_indexes_by_name(index_name_with_date: str, date_from: datetime) -> List:
+    log.debug(f"index_name_with_date={index_name_with_date}, date_from={date_from}")
     index_name_without_date = index_name_with_date[:-10]
     connection = HTTPConnection(elasticsearch["HOST"], elasticsearch["PORT"], timeout=45)
     connection.request("GET", f"_cat/indices/{index_name_without_date}*?s=index&bytes=b&format=json&pretty")
@@ -68,8 +69,14 @@ def get_indexes_by_name(index_name_with_date: str, date_from: datetime) -> List:
             date_index = index_name[-10:]
             parsed_date_index = datetime.strptime(date_index, '%Y.%m.%d')
 
-            if date_from >= parsed_date_index:
+            if date_from <= parsed_date_index:
                 filtered_response.append(index)
+            else:
+                log.debug(f"filtered index_name={index_name} because parsed_date_index={parsed_date_index} older than need data={date_from}")
+        else:
+            log.debug(f"filtered index_name={index_name} because index already merged")
+
+    log.debug(f"found indexes.size={len(filtered_response)} for index_name_with_date={index_name_with_date}, from={date_from}")
 
     return filtered_response
 
