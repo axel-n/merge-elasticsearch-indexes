@@ -83,7 +83,7 @@ def run():
 
         for index in indexes_by_date:
             index_with_date = index["index"]
-            log.info(f"start working with index={index_with_date}, all indexes.count={len(indexes_by_date)} " +
+            log.debug(f"start working with index={index_with_date}, all indexes.count={len(indexes_by_date)} " +
                      f"by date={index_with_date[-10:]}")
             indexes_by_current_index_name = get_indexes_by_name(index_with_date, current_date, yesterday)
 
@@ -104,9 +104,9 @@ def run():
                           f"size={indexes_for_merge[1]}gb, count={indexes_for_merge[2]}")
                 continue
 
-            log.info(f"preparing indexes size={indexes_for_merge[1]}gb, count={indexes_for_merge[2]} for merge")
+            log.info(f"preparing indexes for merge. size={indexes_for_merge[1]}gb, count={indexes_for_merge[2]}. indexes={indexes_for_merge[0]}")
             merge_indexes(indexes_for_merge[0])
-            log.info(f"merged indexes with size={indexes_for_merge[1]}gb, count={indexes_for_merge[2]}")
+            log.info(f"merged indexes. size={indexes_for_merge[1]}gb, count={indexes_for_merge[2]}, indexes={indexes_for_merge[0]}")
 
         current_date = current_date + timedelta(1)
         log.debug(f"increment current_date={current_date}")
